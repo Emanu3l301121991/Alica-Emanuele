@@ -21,9 +21,9 @@ const CONFIG = {
   branch: "main",
   folder: "photos",
   cover:  "cover.jpg",
-  data:   "· i nostri ricordi ·",  // data o frase sotto i nomi
+  data:   "",                      // data delle nozze (vuoto = mostra "i nostri ricordi" tradotto)
   pin:    "2026",                  // PIN d'accesso (vuoto "" = nessun PIN)
-  sections: true                   // titoli di sezione (Cerimonia/Esterni/Festa)
+  sections: false                  // titoli di sezione (true = Cerimonia/Esterni/Festa)
 };
 </script>
 <!-- ============================================================= -->
@@ -114,12 +114,11 @@ const CONFIG = {
   .sec-head h2{font-size:clamp(1.7rem,4vw,2.4rem);color:var(--ink);white-space:nowrap}
   .sec-head .ln{flex:1;height:1px;background:var(--line)}
   .sec-head .n{color:var(--muted);font-size:13px;letter-spacing:.06em}
-  .gallery{columns:4 260px;column-gap:14px}
-  .card{break-inside:avoid;margin-bottom:14px;position:relative;border-radius:14px;overflow:hidden;background:#efe8dc;
-    box-shadow:var(--shadow);cursor:zoom-in;opacity:0;transform:translateY(14px);
-    transition:opacity .6s,transform .6s;min-height:60px}
+  .gallery{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:14px}
+  .card{position:relative;border-radius:14px;overflow:hidden;background:#efe8dc;aspect-ratio:3/2;
+    box-shadow:var(--shadow);cursor:zoom-in;opacity:0;transform:translateY(14px);transition:opacity .6s,transform .6s}
   .card.in{opacity:1;transform:none}
-  .card img{width:100%;transition:transform .5s}
+  .card img{width:100%;height:100%;object-fit:cover;transition:transform .5s}
   .card:hover img{transform:scale(1.04)}
   .card .ov{position:absolute;inset:0;display:flex;align-items:flex-end;justify-content:flex-end;padding:10px;
     background:linear-gradient(to top,rgba(40,38,33,.4),transparent 45%);opacity:0;transition:.25s}
@@ -166,18 +165,18 @@ const CONFIG = {
     letter-spacing:.06em;border-top:1px solid var(--line)}
   footer .names{font-family:'Cormorant Garamond';font-size:1.5rem;color:var(--ink);margin-bottom:6px}
 
-  @media(max-width:900px){ .gallery{columns:3 200px} }
+  @media(max-width:900px){ .gallery{grid-template-columns:repeat(auto-fill,minmax(200px,1fr))} }
   @media(max-width:640px){
     .hero{min-height:74vh;min-height:74svh;padding:50px 20px}
-    .gallery{columns:2 150px;column-gap:10px}
-    .card{margin-bottom:10px;border-radius:12px}
+    .gallery{grid-template-columns:repeat(auto-fill,minmax(148px,1fr));gap:9px}
+    .card{border-radius:12px}
     .card .ov{opacity:1;background:linear-gradient(to top,rgba(40,38,33,.3),transparent 42%)}
     .icon-btn{width:36px;height:36px}
     .sec{margin-top:36px}
     .lb-nav{width:44px;height:44px;font-size:22px}
     .lb-act{padding:10px 14px}
   }
-  @media(max-width:380px){ .gallery{columns:2 130px} }
+  @media(max-width:380px){ .gallery{grid-template-columns:repeat(2,1fr)} }
 </style>
 </head>
 <body>
@@ -269,7 +268,7 @@ let photos = [], current = 0;
 
 /* ---------------- LINGUE ---------------- */
 const I18N = {
-  it:{ htmlLang:"it", eyebrow:"Il nostro matrimonio",
+  it:{ htmlLang:"it", eyebrow:"Il nostro matrimonio", subtitle:"· i nostri ricordi ·",
     intro:"Grazie per aver condiviso con noi questo giorno. Guardate le foto, ingranditele e scaricate le vostre preferite.",
     count:"foto", dlall:"Scarica tutte", dlone:"Scarica", zoom:"Ingrandisci",
     loading:"Carico le foto…", footer:"Con amore · grazie di cuore",
@@ -278,7 +277,7 @@ const I18N = {
     localT:"Anteprima locale", localP:"Online le foto si caricano da sole dalla cartella GitHub.",
     prep:(a,b)=>`Preparo ${a} di ${b}…`, zipmsg:"Creo il file zip…", done:"Fatto! Download avviato",
     sec:{cerimonia:"Cerimonia", esterni:"Esterni", festa:"Festa", _other:"Altre foto"} },
-  de:{ htmlLang:"de", eyebrow:"Unsere Hochzeit",
+  de:{ htmlLang:"de", eyebrow:"Unsere Hochzeit", subtitle:"· unsere Erinnerungen ·",
     intro:"Danke, dass ihr diesen Tag mit uns geteilt habt. Schaut euch die Fotos an, vergrößert sie und ladet eure Lieblingsbilder herunter.",
     count:"Fotos", dlall:"Alle herunterladen", dlone:"Herunterladen", zoom:"Vergrößern",
     loading:"Fotos werden geladen…", footer:"In Liebe · von Herzen danke",
@@ -295,6 +294,7 @@ const T = () => I18N[lang];
 function applyLang(){
   const t = T();
   document.documentElement.lang = t.htmlLang;
+  $('wedding-date').textContent = CONFIG.data || t.subtitle;
   // gate
   $('g-eyebrow').textContent = t.eyebrow;
   $('g-prompt').textContent = t.gatePrompt;
@@ -344,7 +344,7 @@ const raw = p => `https://raw.githubusercontent.com/${CONFIG.user}/${CONFIG.repo
 /* ---------------- CARICAMENTO ---------------- */
 let state = 'loading';
 async function start(){
-  $('wedding-date').textContent = CONFIG.data || '';
+  $('wedding-date').textContent = CONFIG.data || T().subtitle;
   setCover();
   if(configured()){ try{ await loadFromGitHub(); }catch(e){ await loadFromLocal(); } }
   else { await loadFromLocal(); }
